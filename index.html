@@ -1,0 +1,29 @@
+<html class="w-100 h-100">
+  <head>
+    <meta charset='utf-8' />
+    <title>chatt</title>
+    <link rel='stylesheet' href='css/bootstrap.min.css' />
+    <link rel='stylesheet' href='css/bootstrap-theme.min.css' />
+  </head>
+  <body class="container">
+    <div class="input-group input-group-lg" style="margin-top: 37rem;">
+      <span class="input-group-addon" id="sizing-addon1">@</span>
+      <input id="nickname" type="text" class="form-control" placeholder="NickName" aria-describedby="sizing-addon1">
+    </div>
+    <div class="input-group input-group-lg" style="margin-top: 3rem;">
+      <span class="input-group-addon" id="sizing-addon1">#</span>
+      <input id="roomID" type="text" class="form-control" placeholder="RoomID" aria-describedby="sizing-addon1">
+    </div>
+    <div class="text-center hide text-danger" id="error" style="margin-top: 1rem;">有未填项!</div>
+    <button id="btn-1" class="btn btn-block btn-info" style="outline: none; margin-top: 4rem;">GO!</button>
+    <script src='js/jquery-3.7.1.min.js'></script>
+    <script src='js/bootstrap.min.js'></script>
+    <script>
+    $('#btn-1').on('click', e => {
+      if($('#roomID').val() == '' || $('#nickname').val() == '') 
+        $('#error').removeClass("hide");
+      else location.href = `/room?nick=${$('#nickname').val()}&room=${$('#roomID').val()}`;
+    });
+    </script>
+  </body>
+</html>

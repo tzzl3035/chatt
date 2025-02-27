@@ -1,0 +1,74 @@
+<html class="h-100 w-100">
+  <head>
+    <meta charset='utf-8' />
+    <title>chatt</title>
+    <link rel='stylesheet' href='css/bootstrap.min.css' />
+    <link rel='stylesheet' href='css/bootstrap-theme.min.css' />
+  </head>
+  <body class="container h-100" style="max-height: 100%;">
+    <div id="board" class="list-group w-100" style="margin-top: 2%; max-height: 90%; height: 90%; overflow: auto;">
+
+    </div>
+    <div class="input-group footer" style="margin-top: 4%;">
+      <input id="send-text" type="text" class="form-control" placeholder="Message">
+      <span class="input-group-btn">
+        <button id="send-btn" class="btn btn-default" type="button">Send!</button>
+      </span>
+    </div>
+    <script src='js/jquery-3.7.1.min.js'></script>
+    <script src='js/bootstrap.min.js'></script>
+    <script src='socket.io/socket.io.js'></script>
+    <script type="module">
+
+    let socket = io();
+    let arg, yes = 0;
+
+    $(document).ready(() => {
+      arg = new URLSearchParams(location.search);
+      socket.emit('pre', arg.get('room'));
+    });
+
+    socket.on('pre_res', msg => {
+      if(yes == 1) return ;
+      let tmp = JSON.parse(msg); yes = 1;
+      tmp.forEach(ele => {
+        $('#board').prepend(`<a href="#" class="list-group-item">${ele.user} : ${ele.msg}</a>`);
+      });
+    });
+
+    let send_fn = () => {
+      if($('#send-text').val() == '') {
+        alert('发了个寂寞...');
+      } else {
+        let data = {
+          room: arg.get('room'), 
+          user: arg.get('nick'), 
+          msg: $('#send-text').val()
+        };
+        socket.emit('send', JSON.stringify(data));
+      }
+      $('#send-text').val('');
+    };
+
+    $('#send-btn').on('click', e => {
+      send_fn();
+    });
+
+    $('input').keydown(e => {
+      if(e.which == 17) {
+        $('input').keydown(f => {
+          if(f.which == 13) {
+            send_fn();
+          }
+        });
+      }
+    });
+
+    socket.on('send_res', msg => {
+      let tmp = JSON.parse(msg);
+      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item">${tmp.user} : ${tmp.msg}</a>`);
+    })
+
+    </script>
+  </body>
+</html>

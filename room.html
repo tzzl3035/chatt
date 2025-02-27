@@ -17,8 +17,9 @@
     </div>
     <script src='js/jquery-3.7.1.min.js'></script>
     <script src='js/bootstrap.min.js'></script>
+    <script src='js/marked.min.js'></script>
     <script src='socket.io/socket.io.js'></script>
-    <script type="module">
+    <script>
 
     let socket = io();
     let arg, yes = 0;
@@ -32,7 +33,7 @@
       if(yes == 1) return ;
       let tmp = JSON.parse(msg); yes = 1;
       tmp.forEach(ele => {
-        $('#board').prepend(`<a href="#" class="list-group-item">${ele.user} : ${ele.msg}</a>`);
+        $('#board').prepend(`<a href="#" class="list-group-item">${ele.user} : ${marked.marked(ele.msg)}</a>`);
       });
     });
 
@@ -54,9 +55,9 @@
       send_fn();
     });
 
-    $('input').keydown(e => {
+    $('input').on('keydown', e => {
       if(e.which == 17) {
-        $('input').keydown(f => {
+        $('input').on('keydown', f => {
           if(f.which == 13) {
             send_fn();
           }
@@ -64,9 +65,22 @@
       }
     });
 
+    $('input').on('keyup', e => {
+      $('input').off('keydown');
+      $('input').on('keydown', e => {
+        if(e.which == 17) {
+          $('input').on('keydown', f => {
+            if(f.which == 13) {
+              send_fn();
+            }
+          });
+        }
+      });
+    });
+
     socket.on('send_res', msg => {
       let tmp = JSON.parse(msg);
-      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item">${tmp.user} : ${tmp.msg}</a>`);
+      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item">${tmp.user} : ${marked.marked(tmp.msg)}</a>`);
     })
 
     </script>

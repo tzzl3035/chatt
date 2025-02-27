@@ -4,25 +4,60 @@
     <title>chatt</title>
     <link rel='stylesheet' href='css/bootstrap.min.css' />
     <link rel='stylesheet' href='css/bootstrap-theme.min.css' />
+    <link rel='stylesheet' href='css/katex.min.css' />
   </head>
   <body class="container h-100" style="max-height: 100%;">
-    <div id="board" class="list-group w-100" style="margin-top: 2%; max-height: 90%; height: 90%; overflow: auto;">
+    <div id="board" class="list-group w-100" style="margin-top: 1%; max-height: 90%; height: 90%; overflow: auto;">
 
     </div>
-    <div class="input-group footer" style="margin-top: 4%;">
-      <input id="send-text" type="text" class="form-control" placeholder="Message">
-      <span class="input-group-btn">
-        <button id="send-btn" class="btn btn-default" type="button">Send!</button>
+    <div class="input-group footer" style="margin-top: 2%;">
+      <textarea id="send-text" type="text" class="form-control" placeholder="Message"></textarea>
+      <span class="input-group-btn" style="height: 5rem;">
+        <button id="send-btn" class="btn btn-default" type="button" style="height: 100%;">Send!</button>
       </span>
     </div>
     <script src='js/jquery-3.7.1.min.js'></script>
     <script src='js/bootstrap.min.js'></script>
     <script src='js/marked.min.js'></script>
+    <script src='js/katex.min.js'></script>
+    <script src='js/auto-render.min.js'></script>
     <script src='socket.io/socket.io.js'></script>
     <script>
 
     let socket = io();
     let arg, yes = 0;
+
+    const renderLatex = (text) => {
+
+      text = text.replace(/\\\$/g, '＄'); // 临时替换转义符
+
+      // 先处理行内公式 $...$
+      text = text.replace(/(?<!\\)\$(.*?)(?<!\\)\$/g, (match, latex) => {
+        try {
+          return katex.renderToString(latex, { 
+            displayMode: false, // 行内模式
+            throwOnError: false
+          });
+        } catch (e) {
+          return `<span style="color: red">[公式错误]</span>`;
+        }
+      });
+
+      // 再处理块级公式 $$...$$
+      text = text.replace(/(?<!\\)\$\$(.*?)(?<!\\)\$\$/gs, (match, latex) => {
+        try {
+          return katex.renderToString(latex, { 
+            displayMode: true, // 块级模式
+            throwOnError: false
+          });
+        } catch (e) {
+          return `<div style="color: red">[块公式错误]</div>`;
+        }
+      });
+
+      return text.replace(/＄/g, '$');
+
+    };
 
     $(document).ready(() => {
       arg = new URLSearchParams(location.search);
@@ -33,7 +68,7 @@
       if(yes == 1) return ;
       let tmp = JSON.parse(msg); yes = 1;
       tmp.forEach(ele => {
-        $('#board').prepend(`<a href="#" class="list-group-item">${ele.user} : ${marked.marked(ele.msg)}</a>`);
+        $('#board').prepend(`<a href="#" class="list-group-item">${ele.user} : ${renderLatex(marked.marked(ele.msg))}</a>`);
       });
     });
 
@@ -55,9 +90,9 @@
       send_fn();
     });
 
-    $('input').on('keydown', e => {
+    $('textarea').on('keydown', e => {
       if(e.which == 17) {
-        $('input').on('keydown', f => {
+        $('textarea').on('keydown', f => {
           if(f.which == 13) {
             send_fn();
           }
@@ -65,11 +100,11 @@
       }
     });
 
-    $('input').on('keyup', e => {
-      $('input').off('keydown');
-      $('input').on('keydown', e => {
+    $('textarea').on('keyup', e => {
+      $('textarea').off('keydown');
+      $('textarea').on('keydown', e => {
         if(e.which == 17) {
-          $('input').on('keydown', f => {
+          $('textarea').on('keydown', f => {
             if(f.which == 13) {
               send_fn();
             }
@@ -80,8 +115,19 @@
 
     socket.on('send_res', msg => {
       let tmp = JSON.parse(msg);
-      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item">${tmp.user} : ${marked.marked(tmp.msg)}</a>`);
+      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item">${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
     })
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},  // 块级公式
+          {left: '$', right: '$', display: false}    // 行内公式
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea'], // 跳过这些标签
+        throwOnError: false
+      });
+    });
 
     </script>
   </body>

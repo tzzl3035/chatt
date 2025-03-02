@@ -22,6 +22,15 @@ app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
 });
 
+app.get('/existUser', async (req, res) => {
+  let data = await userListChar.find(req.query);
+  if(data.length == 0) {
+    res.send({yes: 0});
+  } else {
+    res.send({yes: 1});
+  }
+});
+
 io.on('connection', socket => {
   socket.on('pre', async msg => {
     let res = await msgChar.find({room: msg});

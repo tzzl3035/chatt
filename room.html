@@ -66,8 +66,11 @@
 
     };
 
-    $(document).ready(() => {
+    $(document).ready(async () => {
       arg = new URLSearchParams(location.search);
+      let enter_tmp = await fetch(`/existUser?room=${arg.get('room')}&user=${arg.get('nick')}`);
+      let enter = await enter_tmp.json();
+      if(enter.yes == 1) location.pathname = '/';
       socket.emit('pre', arg.get('room'));
       socket.emit('add_user', JSON.stringify({
         user: arg.get('nick'), 

@@ -32,7 +32,7 @@
     <script>
 
     let socket = io();
-    let arg, yes = 0;
+    let arg, yes = 0, flag = 0;
 
     const renderLatex = (text) => {
 
@@ -70,7 +70,11 @@
       arg = new URLSearchParams(location.search);
       let enter_tmp = await fetch(`/existUser?room=${arg.get('room')}&user=${arg.get('nick')}`);
       let enter = await enter_tmp.json();
-      if(enter.yes == 1) location.pathname = '/';
+      if(enter.yes == 1) {
+        flag = 1;
+        location.pathname = '/';
+        return ;
+      }
       socket.emit('pre', arg.get('room'));
       socket.emit('add_user', JSON.stringify({
         user: arg.get('nick'), 
@@ -80,6 +84,7 @@
     });
 
     $(window).on('beforeunload', e => {
+      if(flag) return ;
       socket.emit('del_user', JSON.stringify({
         user: arg.get('nick'), 
         room: arg.get('room')
@@ -87,7 +92,7 @@
     });
 
     socket.on('pre_res', msg => {
-      if(yes == 1) return ;
+      if(flag) return ;
       let tmp = JSON.parse(msg); yes = 1;
       tmp.msg.forEach(ele => {
         $('#board').prepend(`<a href="#" class="list-group-item"><i>${ele.date}</i> &nbsp; &nbsp; ${ele.user} : ${renderLatex(marked.marked(ele.msg))}</a>`);
@@ -95,6 +100,7 @@
     });
 
     socket.on('all_user_res', msg => {
+      if(flag) return ;
       let tmp  = JSON.parse(msg);
       if(tmp[0].room == arg.get('room')) {
         $('#board2').html('');
@@ -105,6 +111,7 @@
     });
 
     socket.on('add_user_res', msg => {
+      if(flag) return ;
       let tmp = JSON.parse(msg);
       if(tmp.room == arg.get('room') && tmp.user != arg.get('nick')) {
         socket.emit('all_user', arg.get('room'));
@@ -112,6 +119,7 @@
     });
 
     socket.on('del_user_res', msg => {
+      if(flag) return ;
       let tmp = JSON.parse(msg);
       if(tmp.room == arg.get('room')) {
         socket.emit('all_user', arg.get('room'));
@@ -119,6 +127,7 @@
     });
 
     let send_fn = () => {
+      if(flag) return ;
       if($('#send-text').val() == '') {
         alert('发了个寂寞...');
       } else {
@@ -134,10 +143,12 @@
     };
 
     $('#send-btn').on('click', e => {
+      if(flag) return ;
       send_fn();
     });
 
     $('textarea').on('keydown', e => {
+      if(flag) return ;
       if(e.which == 17) {
         $('textarea').on('keydown', f => {
           if(f.which == 13) {
@@ -148,6 +159,7 @@
     });
 
     $('textarea').on('keyup', e => {
+      if(flag) return ;
       $('textarea').off('keydown');
       $('textarea').on('keydown', e => {
         if(e.which == 17) {
@@ -161,6 +173,7 @@
     });
 
     socket.on('send_res', msg => {
+      if(flag) return ;
       let tmp = JSON.parse(msg);
       if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item"><i>${tmp.date}</i> &nbsp; &nbsp; ${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
     })

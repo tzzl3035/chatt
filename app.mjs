@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';
 import msgChar from './msgChar.mjs';
+import userListChar from './userListChar.mjs'
 
 const app = express();
 const server = createServer(app);
@@ -24,17 +25,41 @@ app.get('/', (req, res) => {
 io.on('connection', socket => {
   socket.on('pre', async msg => {
     let res = await msgChar.find({room: msg});
-    io.emit('pre_res', JSON.stringify(res));
+    io.emit('pre_res', JSON.stringify({
+      msg: res
+    }));
   });
   socket.on('send', async msg => {
     let tmp = JSON.parse(msg);
     let data = new msgChar({
       user: tmp.user, 
       room: tmp.room, 
-      msg: tmp.msg
+      msg: tmp.msg, 
+      date: tmp.date
     });
     await data.save();
     io.emit('send_res', msg);
+  });
+  socket.on('all_user', async msg => {
+    let data = await userListChar.find({room: msg});
+    io.emit('all_user_res', JSON.stringify(data));
+  });
+  socket.on('add_user', async msg => {
+    let tmp = JSON.parse(msg);
+    let data = new userListChar({
+      user: tmp.user, 
+      room: tmp.room
+    });
+    await data.save();
+    io.emit('add_user_res', msg);
+  });
+  socket.on('del_user', async msg => {
+    let tmp = JSON.parse(msg);
+    await userListChar.findOneAndDelete({
+      room: tmp.room, 
+      user: tmp.user
+    });
+    io.emit('del_user_res', msg);
   });
 });
 

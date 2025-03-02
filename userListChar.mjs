@@ -4,13 +4,11 @@ const conn = mongoose.createConnection('mongodb://127.0.0.1:27017/chatt');
 
 const Schema = mongoose.Schema;
 
-const msgCharSchema = new Schema({
-  user: String, 
+const userListSchema = new Schema({
   room: String, 
-  msg: String, 
-  date: String
+  user: String
 });
 
-const msgChar = conn.model('msg', msgCharSchema);
+const userListChar = conn.model('userList', userListSchema);
 
-export default msgChar;
+export default userListChar;

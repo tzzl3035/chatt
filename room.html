@@ -95,7 +95,8 @@
       if(flag) return ;
       let tmp = JSON.parse(msg); yes = 1;
       tmp.msg.forEach(ele => {
-        $('#board').prepend(`<a href="#" class="list-group-item"><i>${ele.date}</i> &nbsp; &nbsp; ${ele.user} : ${renderLatex(marked.marked(ele.msg))}</a>`);
+        $('#board').append(`<a href="#" class="list-group-item"><i>${ele.date}</i> &nbsp; &nbsp; ${ele.user} : ${renderLatex(marked.marked(ele.msg))}</a>`);
+        $('#board').scrollTop($('#board')[0].scrollHeight);
       });
     });
 
@@ -175,7 +176,15 @@
     socket.on('send_res', msg => {
       if(flag) return ;
       let tmp = JSON.parse(msg);
-      if(tmp.room == arg.get('room')) $('#board').prepend(`<a href="#" class="list-group-item"><i>${tmp.date}</i> &nbsp; &nbsp; ${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
+      if(tmp.room == arg.get('room')) {
+        if($('#board').scrollTop() + $('#board').prop('clientHeight') >= $('#board').prop('scrollHeight') - 5) {
+          $('#board').append(`<a href="#" class="list-group-item"><i>${tmp.date}</i> &nbsp; &nbsp; ${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
+          $('#board').scrollTop($('#board')[0].scrollHeight);
+        }
+        else {
+          $('#board').append(`<a href="#" class="list-group-item"><i>${tmp.date}</i> &nbsp; &nbsp; ${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
+        }
+      }
     })
 
     document.addEventListener('DOMContentLoaded', () => {

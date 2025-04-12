@@ -33,9 +33,12 @@ app.get('/existUser', async (req, res) => {
 
 io.on('connection', socket => {
   socket.on('pre', async msg => {
-    let res = await msgChar.find({room: msg});
+    let tmp = JSON.parse(msg);
+    let res = await msgChar.find({room: tmp.room});
     io.emit('pre_res', JSON.stringify({
-      msg: res
+      msg: res, 
+      room: tmp.room, 
+      user: tmp.user
     }));
   });
   socket.on('send', async msg => {

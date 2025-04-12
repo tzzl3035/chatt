@@ -75,7 +75,10 @@
         location.pathname = '/';
         return ;
       }
-      socket.emit('pre', arg.get('room'));
+      socket.emit('pre', JSON.stringify({
+        room: arg.get('room'), 
+        user: arg.get('nick'), 
+      }));
       socket.emit('add_user', JSON.stringify({
         user: arg.get('nick'), 
         room: arg.get('room')
@@ -92,7 +95,7 @@
     });
 
     socket.on('pre_res', msg => {
-      if(flag) return ;
+      if(flag || yes) return ;
       let tmp = JSON.parse(msg); yes = 1;
       tmp.msg.forEach(ele => {
         $('#board').append(`<a href="#" class="list-group-item"><i>${ele.date}</i> &nbsp; &nbsp; ${ele.user} : ${renderLatex(marked.marked(ele.msg))}</a>`);

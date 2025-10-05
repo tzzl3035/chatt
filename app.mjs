@@ -5,11 +5,13 @@ import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';
 import msgChar from './msgChar.mjs';
 import userListChar from './userListChar.mjs'
+import clearLogChar from './clearLogChar.mjs'
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+// 给静态资源加上路由
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(express.static(join(__dirname, './bootstrap-3.4.1-dist/')));
@@ -22,6 +24,7 @@ app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
 });
 
+// 用户存在判断 *无需实时，没用socket
 app.get('/existUser', async (req, res) => {
   let data = await userListChar.find(req.query);
   if(data.length == 0) {
@@ -31,7 +34,22 @@ app.get('/existUser', async (req, res) => {
   }
 });
 
+// 每日清空用户列表判断，无需实时，没用socket
+app.get('/clearUser', async (req, res) => {
+  let data = await clearLogChar.find(req.query);
+  if(data.length == 0) {
+    console.log(`${req.query.date} userList was clear!`);
+    let data2 = new clearLogChar(req.query);
+    await data2.save();
+    await userListChar.deleteMany({});
+    res.send({yes: 1});
+  }
+  else res.send({yes: 0});
+});
+
+// socket.io
 io.on('connection', socket => {
+  // 获取消息列表
   socket.on('pre', async msg => {
     let tmp = JSON.parse(msg);
     let res = await msgChar.find({room: tmp.room});
@@ -41,8 +59,10 @@ io.on('connection', socket => {
       user: tmp.user
     }));
   });
+  // 发送消息
   socket.on('send', async msg => {
     let tmp = JSON.parse(msg);
+    console.log(`[${tmp.date}] [${tmp.room}] ${tmp.user}: ${tmp.msg}`);
     let data = new msgChar({
       user: tmp.user, 
       room: tmp.room, 
@@ -52,12 +72,15 @@ io.on('connection', socket => {
     await data.save();
     io.emit('send_res', msg);
   });
+  // 获取用户列表
   socket.on('all_user', async msg => {
     let data = await userListChar.find({room: msg});
     io.emit('all_user_res', JSON.stringify(data));
   });
+  // 用户加入
   socket.on('add_user', async msg => {
     let tmp = JSON.parse(msg);
+    console.log(`[${tmp.room}] ${tmp.user} was joining.`);
     let data = new userListChar({
       user: tmp.user, 
       room: tmp.room
@@ -65,8 +88,10 @@ io.on('connection', socket => {
     await data.save();
     io.emit('add_user_res', msg);
   });
+  // 用户退出
   socket.on('del_user', async msg => {
     let tmp = JSON.parse(msg);
+    console.log(`[${tmp.room}] ${tmp.user} was leaving.`);
     await userListChar.findOneAndDelete({
       room: tmp.room, 
       user: tmp.user
@@ -75,6 +100,7 @@ io.on('connection', socket => {
   });
 });
 
+// 监听3000端口
 server.listen(3000, () => {
   console.log('Server running at http://localhost:3000!');
 });

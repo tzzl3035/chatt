@@ -8,9 +8,11 @@
   </head>
   <body class="h-100 row" style="max-height: 100%; width: 100%;">
     <div class="col-sm-offset-1 col-sm-8">
+      <!-- 消息列表 -->
       <div id="board" class="list-group w-100" style="margin-top: 1%; max-height: 90%; height: 90%; overflow: auto;">
 
       </div>
+      <!-- 消息输入框 -->
       <div class="input-group footer" style="margin-top: 2%;">
         <textarea id="send-text" type="text" class="form-control" placeholder="Message"></textarea>
         <span class="input-group-btn" style="height: 5rem;">
@@ -19,6 +21,7 @@
       </div>
     </div>
     <div class="col-sm-offset-1 col-sm-2" style="height: 90%; width: 10%; margin-top: 2%;">
+      <!-- 用户列表 -->
       <div id="board2" class="list-group w-100" style="height: 100%; overflow: auto;">
 
       </div>
@@ -33,6 +36,7 @@
 
     let socket = io();
     let arg, yes = 0, flag = 0;
+    // flag: 是否重名;   yes: 消息列表是否初始化过;   arg: 使用arg.get('room / nick') 获取页面信息
 
     const renderLatex = (text) => {
 
@@ -66,8 +70,10 @@
 
     };
 
+    // 页面加载时
     $(document).ready(async () => {
       arg = new URLSearchParams(location.search);
+      let clear_tmp = await fetch(`/clearUser?date=${(new Date()).toLocaleDateString()}`);
       let enter_tmp = await fetch(`/existUser?room=${arg.get('room')}&user=${arg.get('nick')}`);
       let enter = await enter_tmp.json();
       if(enter.yes == 1) {
@@ -86,6 +92,7 @@
       socket.emit('all_user', arg.get('room'));
     });
 
+    // 页面注销时删除该用户
     $(window).on('beforeunload', e => {
       if(flag) return ;
       socket.emit('del_user', JSON.stringify({
@@ -94,6 +101,7 @@
       }));
     });
 
+    // 初始化消息列表
     socket.on('pre_res', msg => {
       if(flag || yes) return ;
       let tmp = JSON.parse(msg); yes = 1;
@@ -103,6 +111,7 @@
       });
     });
 
+    // 初始化用户列表
     socket.on('all_user_res', msg => {
       if(flag) return ;
       let tmp  = JSON.parse(msg);
@@ -114,6 +123,7 @@
       }
     });
 
+    // 如果有用户加入，重新初始化用户列表
     socket.on('add_user_res', msg => {
       if(flag) return ;
       let tmp = JSON.parse(msg);
@@ -122,6 +132,7 @@
       }
     });
 
+    // 如果有用户退出，重新初始化用户列表
     socket.on('del_user_res', msg => {
       if(flag) return ;
       let tmp = JSON.parse(msg);
@@ -130,6 +141,7 @@
       }
     });
 
+    // 发送消息函数
     let send_fn = () => {
       if(flag) return ;
       if($('#send-text').val() == '') {
@@ -146,11 +158,13 @@
       $('#send-text').val('');
     };
 
+    // 按Send按钮发送消息
     $('#send-btn').on('click', e => {
       if(flag) return ;
       send_fn();
     });
 
+    // Ctrl + Enter 发送
     $('textarea').on('keydown', e => {
       if(flag) return ;
       if(e.which == 17) {
@@ -162,6 +176,7 @@
       }
     });
 
+    // Ctrl + Enter 发送 加上了如果按过就取消
     $('textarea').on('keyup', e => {
       if(flag) return ;
       $('textarea').off('keydown');
@@ -176,11 +191,12 @@
       });
     });
 
+    // 接收新消息
     socket.on('send_res', msg => {
       if(flag) return ;
       let tmp = JSON.parse(msg);
       if(tmp.room == arg.get('room')) {
-        if($('#board').scrollTop() + $('#board').prop('clientHeight') >= $('#board').prop('scrollHeight') - 5) {
+        if($('#board').scrollTop() + $('#board').prop('clientHeight') >= $('#board').prop('scrollHeight') - 5) { // 判断是否自动下滑
           $('#board').append(`<a href="#" class="list-group-item"><i>${tmp.date}</i> &nbsp; &nbsp; ${tmp.user} : ${renderLatex(marked.marked(tmp.msg))}</a>`);
           $('#board').scrollTop($('#board')[0].scrollHeight);
         }

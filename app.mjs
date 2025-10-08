@@ -1,8 +1,10 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, extname } from 'node:path';
+import { rename } from 'node:fs'
 import { Server } from 'socket.io';
+import multer from 'multer'
 import msgChar from './msgChar.mjs';
 import userListChar from './userListChar.mjs'
 import clearLogChar from './clearLogChar.mjs'
@@ -10,11 +12,12 @@ import clearLogChar from './clearLogChar.mjs'
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
+const uploads = multer({ dest: 'static/uploads/' });
 
 // 给静态资源加上路由
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-app.use(express.static(join(__dirname, './bootstrap-3.4.1-dist/')));
+app.use(express.static(join(__dirname, './static/')));
 
 app.get('/room', (req, res) => {
   res.sendFile(join(__dirname, 'room.html'));
@@ -22,6 +25,20 @@ app.get('/room', (req, res) => {
 
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
+});
+
+// 处理文件上传
+app.post('/upload', uploads.single('file'), (req, res) => {
+  let ext = extname(req.file.originalname);
+  let tmp = req.file.filename + ext;
+  let OLD = join('./static/uploads', req.file.filename);
+  let NEW = join('./static/uploads', tmp);
+  rename(OLD, NEW, err => {});
+  res.send({
+    yes: 1,
+    url: `uploads/${tmp}`,
+    name: req.file.originalname
+  });
 });
 
 // 用户存在判断 *无需实时，没用socket

@@ -2,9 +2,10 @@
 	"dependencies": {
 		"express": "^4.21.2",
 		"mongoose": "^8.10.2",
+		"multer": "^2.0.2",
 		"socket.io": "^4.8.1"
 	},
-  "scripts": {
-    "start": "node app.mjs"
-  }
+	"scripts": {
+		"start": "node app.mjs"
+	}
 }

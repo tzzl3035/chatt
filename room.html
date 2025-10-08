@@ -20,10 +20,14 @@
         </span>
       </div>
     </div>
-    <div class="col-sm-offset-1 col-sm-2" style="height: 90%; width: 10%; margin-top: 2%;">
+    <div class="col-sm-offset-1 col-sm-2" style="width: 13%; margin-top: 1%;">
       <!-- 用户列表 -->
-      <div id="board2" class="list-group w-100" style="height: 100%; overflow: auto;">
+      <div id="board2" class="list-group w-100" style="height: 85%; max-height: 85%; overflow: auto;">
 
+      </div>
+      <div style="border: 2px solid #eee; border-radius: 5px; width: 100%; overflow: hidden;">
+        <input type="file" id="file-ipt" style="margin-top: 7px; margin-left: 4px;" />
+        <button id="file-btn" class="btn btn-default" type="button" style="width: 85%; margin-top: 7%; margin-left: 4px; margin-bottom: 9px;">Submit!</button>
       </div>
     </div>
     <script src='js/jquery-3.7.1.min.js'></script>
@@ -205,6 +209,27 @@
         }
       }
     })
+
+    $('#file-btn').on('click', async e => {
+      const fileIPT = document.getElementById('file-ipt');
+      const file = fileIPT.files[0];
+      if(!file) {
+        alert('您老人家文件呢...');
+      }
+      else {
+        const FD = new FormData();
+        FD.append('file', file);
+        const tmp = await fetch('/upload', {
+          method: 'post', 
+          body: FD
+        });
+        const res = await tmp.json();
+        let tmp2 = $('#send-text').val();
+        $('#send-text').val(`房间文件: [${file.name}](${res.url})`);
+        send_fn();
+        $('#send-text').val(tmp2);
+      }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
       renderMathInElement(document.body, {

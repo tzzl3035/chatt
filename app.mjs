@@ -34,8 +34,11 @@ app.post('/upload', uploads.single('file'), (req, res) => {
   let OLD = join('./static/uploads', req.file.filename);
   let NEW = join('./static/uploads', tmp);
   rename(OLD, NEW, err => {});
+  let oYes = 0;
+  if(ext == '.png' || ext == '.jpg' || ext == '.jpeg' || ext == '.gif') 
+    oYes = 1;
   res.send({
-    yes: 1,
+    yes: oYes,
     url: `uploads/${tmp}`,
     name: req.file.originalname
   });

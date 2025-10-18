@@ -9,26 +9,30 @@
   <body class="h-100 row" style="max-height: 100%; width: 100%;">
     <div class="col-sm-offset-1 col-sm-8">
       <!-- 消息列表 -->
-      <div id="board" class="list-group w-100" style="margin-top: 1%; max-height: 90%; height: 90%; overflow: auto;">
+      <div id="board" class="list-group w-100" style="margin-top: 1%; max-height: 85%; height: 85%; overflow: auto;">
 
       </div>
       <!-- 消息输入框 -->
       <div class="input-group footer" style="margin-top: 2%;">
-        <textarea id="send-text" type="text" class="form-control" placeholder="Message"></textarea>
-        <span class="input-group-btn" style="height: 5rem;">
+        <textarea id="send-text" type="text" class="form-control" placeholder="Message" style="height: 10rem;"></textarea>
+        <span class="input-group-btn" style="height: 10rem;">
           <button id="send-btn" class="btn btn-default btn-primary" type="button" style="height: 100%; outline: none;">Send!</button>
         </span>
       </div>
     </div>
-    <div class="col-sm-offset-1 col-sm-2" style="width: 13%; margin-top: 1%;">
+    <div class="col-sm-offset-1 col-sm-2" style="width: 13%; margin-top: 2%;">
       <!-- 用户列表 -->
-      <div id="board2" class="list-group w-100" style="height: 83%; max-height: 85%; overflow: auto;">
+      <div id="board2" class="list-group w-100" style="height: 75%; max-height: 75%; overflow: auto;">
 
       </div>
       <!-- 文件提交 -->
-      <div style="border: 2px solid #eee; border-radius: 5px; width: 100%; overflow: hidden;">
-        <input type="file" id="file-ipt" style="margin-top: 7px; margin-left: 4px;" />
-        <button id="file-btn" class="btn btn-default btn-success" type="button" style="width: 85%; margin-top: 7%; margin-left: 4px; margin-bottom: 9px; outline: none;">Submit!</button>
+      <div style="border: 2px solid #eee; border-radius: 2%; width: 100%; height: 10%; overflow: hidden;">
+        <input type="file" id="file-ipt" style="margin-top: 7%; margin-left: 2%;" />
+        <button id="file-btn" class="btn btn-default btn-success" type="button" style="width: 96%; margin-top: 10%; margin-left: 2%; margin-bottom: 2%; outline: none; height: 30%; line-height: 100%;">Submit!</button>
+      </div>
+      <!-- 进度条 -->
+      <div class="progress" style="margin-top: 3%;">
+        <div id="file-pgr" class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: 0%;"></div>
       </div>
       <!-- 紧急 yk 按钮 -->
       <button id="yk-btn" class="btn btn-default btn-danger btn-block" style="margin-top: 5%; outline: none;" type="button">YK 退出房间</button>
@@ -228,7 +232,7 @@
     })
 
     // 发送文件
-    $('#file-btn').on('click', async e => {
+    $('#file-btn').on('click', e => {
       const fileIPT = document.getElementById('file-ipt');
       const file = fileIPT.files[0];
       if(!file) {
@@ -237,17 +241,39 @@
       else {
         const FD = new FormData();
         FD.append('file', file);
+        $('#file-pgr').css({'width': `0%`});
+        let XHR = new XMLHttpRequest();
+        XHR.open('post', '/upload', true);
+        XHR.onload = () => {
+          const res = JSON.parse(XHR.responseText);
+          let tmp2 = $('#send-text').val();
+          if(res.yes == 1) $('#send-text').val(`房间图片:<br /> <img alt=${file.name} src=${res.url} height="200" />`);
+          else $('#send-text').val(`房间文件: [${file.name}](${res.url})`);
+          send_fn();
+          $('#send-text').val(tmp2);
+        };
+        XHR.upload.onprogress = e => {
+          const pgr = Math.round(e.loaded / e.total * 100);
+          $('#file-pgr').css({'width': `${pgr}%`});
+        };
+        XHR.send(FD);
+        /*
         const tmp = await fetch('/upload', {
           method: 'post', 
-          body: FD
+          body: FD,
+          upload: e => {
+            const pgr = Math.round(e.loaded / e.total * 100);
+            console.log(pgr);
+            $('#file-pgr').css({'width': `${pgr}%`});
+          }
         });
         const res = await tmp.json();
         let tmp2 = $('#send-text').val();
-        console.log(res.yes);
         if(res.yes == 1) $('#send-text').val(`房间图片:<br /> <img alt=${file.name} src=${res.url} height="200" />`);
         else $('#send-text').val(`房间文件: [${file.name}](${res.url})`);
         send_fn();
         $('#send-text').val(tmp2);
+        */
       }
     });
 
